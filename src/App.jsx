@@ -1,5 +1,8 @@
 import React, { useState } from 'react';
 
+const QUESTION_LIMIT = 20;
+const COOLDOWN_HOURS = 2;
+
 function App() {
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState('');
@@ -36,7 +39,7 @@ function App() {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify(requestBody)
-      });
+      }); 
 
       if (!response.ok) {
         const errorData = await response.json();
@@ -92,23 +95,41 @@ function App() {
             </div>
           )}
         </div>
-        <form onSubmit={handleSubmit} className="flex p-4 bg-gradient-to-r from-blue-800 to indigo-900 border-t border-gray-300 rounded-b-lg">
+
+        <div className="text-center my-3 text-sm text-gray-600">
+          Questions remaining today: {QUESTION_LIMIT - messages.length}
+        </div>
+
+        <form onSubmit={handleSubmit} className="flex gap-2 p-4 border-t border-gray-200">
           <input
-            type="text"
             value={input}
             onChange={(e) => setInput(e.target.value)}
-            placeholder="Type your message..."
-            disabled={isLoading}
-            className="flex-grow p-2 border border-gray-300 rounded-lg mr-3 focus:outline-none focus:ring focus:ring-blue-200"
+            placeholder={QUESTION_LIMIT - messages.length > 0 
+              ? "Ask a question..." 
+              : `Too many questions. Please wait ${COOLDOWN_HOURS} hours.`}
+            disabled={QUESTION_LIMIT - messages.length <= 0 || isLoading}
+            className={`flex-1 p-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500
+              ${QUESTION_LIMIT - messages.length <= 0 ? 'bg-gray-100 text-gray-500 cursor-not-allowed' : 'bg-white'}
+              ${isLoading ? 'cursor-wait' : ''}`}
           />
-          <button
-            type="submit"
-            disabled={isLoading || !input.trim()}
-            className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:bg-gray-300 disabled:cursor-not-allowed"
+          <button 
+            type="submit" 
+            disabled={QUESTION_LIMIT - messages.length <= 0 || isLoading}
+            className={`px-4 py-2 rounded-lg bg-blue-500 text-white font-semibold
+              hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2
+              disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-blue-500
+              transition-colors duration-200`}
           >
             Send
           </button>
         </form>
+
+        {QUESTION_LIMIT - messages.length <= 0 && (
+          <div className="text-center p-4 text-sm text-red-600 bg-red-50 rounded-lg mx-4 mb-4">
+            You've reached the maximum number of questions. 
+            Please try again in {COOLDOWN_HOURS} hours.
+          </div>
+        )}
       </div>
     </div>
   );
